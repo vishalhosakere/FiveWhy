@@ -11,17 +11,31 @@ import UIKit
 extension UIView {
     
     // Export pdf from Save pdf in drectory and return pdf file path
-    func exportAsPdfFromView(name forName: String) -> String {
+    func exportAsPdfFromView(name forName: String, auxView: UIView?) -> UIViewController? {
         scaler(view: self)
-        let pdfPageFrame = CGRect(x: 0, y: 0, width: self.bounds.width, height: self.bounds.height)
+        let pdfPageFrame = CGRect(x: 0, y: 0, width: self.bounds.width + (auxView?.bounds.width ?? 0), height: self.bounds.height + (auxView?.bounds.height ?? 0))
         let pdfData = NSMutableData()
         UIGraphicsBeginPDFContextToData(pdfData, pdfPageFrame, nil)
         UIGraphicsBeginPDFPageWithInfo(pdfPageFrame, nil)
-        guard let pdfContext = UIGraphicsGetCurrentContext() else { return "" }
+        guard let pdfContext = UIGraphicsGetCurrentContext() else { return nil }
         //        pdfContext.scaleBy(x: 1/8, y: 1/8)
         self.layer.render(in: pdfContext)
+        if auxView != nil{
+            pdfContext.translateBy(x: self.bounds.size.width, y: 0)
+            auxView?.layer.render(in: pdfContext)
+        }
         UIGraphicsEndPDFContext()
-        return self.saveViewPdf(data: pdfData, name: forName)
+        
+        let pdfPreview = PdfPreviewViewController(data: pdfData)
+        return pdfPreview
+        
+//        let newSize = CGSize(width: self.bounds.width + (auxView?.bounds.width ?? 0), height: self.bounds.height + (auxView?.bounds.height ?? 0))
+//        UIGraphicsBeginImageContextWithOptions(newSize, false, UIScreen.main.scale)
+//        defer { UIGraphicsEndImageContext() }
+//        self.drawHierarchy(in: self.bounds, afterScreenUpdates: true)
+//        let image = UIGraphicsGetImageFromCurrentImageContext()
+        
+//        return self.saveViewPdf(data: pdfData, name: forName)
         
     }
     

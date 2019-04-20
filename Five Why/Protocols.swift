@@ -16,7 +16,11 @@ protocol menuControllerDelegate {
     func saveViewStateAsNew()
     func takeScreenShot()
     func exportAsPDF()
-    
+    func startAnalysis()
+}
+
+protocol savePDFDelegate {
+    func savePDFtoStorage()
 }
 
 // end protocol AppDirectoryNames

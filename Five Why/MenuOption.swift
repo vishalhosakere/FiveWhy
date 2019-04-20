@@ -13,7 +13,7 @@ enum MenuOption: Int, CustomStringConvertible{
     case SaveAs
     case Screenshot
     case ExportPDF
-
+    case StartAnalysis
     
     var description: String
     {
@@ -23,6 +23,7 @@ enum MenuOption: Int, CustomStringConvertible{
         case .SaveAs: return "Save As"
         case .Screenshot: return "Screenshot"
         case .ExportPDF: return "Export as PDF"
+        case .StartAnalysis: return "Start Analysis"
         }
     }
     
@@ -32,6 +33,7 @@ enum MenuOption: Int, CustomStringConvertible{
         case .SaveAs: return UIImage(named: "save") ?? UIImage()
         case .Screenshot: return UIImage(named: "screenshot") ?? UIImage()
         case .ExportPDF: return UIImage(named: "profile") ?? UIImage()
+        case .StartAnalysis: return UIImage(named: "analysis") ?? UIImage()
         }
     }
 }

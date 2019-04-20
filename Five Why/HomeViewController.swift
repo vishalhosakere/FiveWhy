@@ -28,7 +28,11 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
     var fiveWhy5 : UITextView!
     var activeField: UITextView?
     var lastOffset: CGPoint!
-    var keyboardHeight: CGFloat!
+    var keyboardHeight: CGFloat = 0
+    var labels: [UILabel] = []
+    static var analysisData : [String] = []
+    static var analysisVC = AnalysisViewController()
+    static var pdfData: NSMutableData?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -40,8 +44,20 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
         // Observe keyboard change
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
-        
+        self.contentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(returnTextView(gesture:))))
     }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+    
     
     @objc func returnTextView(gesture: UIGestureRecognizer) {
         guard activeField != nil else {
@@ -67,41 +83,47 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
 
     func configureScrollView()
     {
-        self.scrollView = UIScrollView(frame: CGRect(x: 0, y: 0, width: self.view.frame.width, height: self.view.frame.height))
+        self.scrollView = UIScrollView()
+        self.scrollView.translatesAutoresizingMaskIntoConstraints = false
         self.scrollView.delegate = self
         self.view.addSubview(scrollView)
-        self.scrollView.contentSize = CGSize(width: self.view.frame.width, height: self.view.frame.height)
+        self.scrollView.contentSize = CGSize(width: self.view.bounds.width, height: self.view.bounds.height)
         self.contentView = UIView()
-        contentView.backgroundColor = .orange
+        self.scrollView.backgroundColor = #colorLiteral(red: 0.721568644, green: 0.8862745166, blue: 0.5921568871, alpha: 1)
+        self.contentView.backgroundColor = #colorLiteral(red: 0.9411764741, green: 0.4980392158, blue: 0.3529411852, alpha: 1)
         self.contentView.translatesAutoresizingMaskIntoConstraints = false
         self.scrollView.addSubview(contentView)
+        
+        self.scrollView.topAnchor.constraint(equalTo: self.view.topAnchor).isActive = true
+        self.scrollView.widthAnchor.constraint(equalTo: self.view.widthAnchor).isActive = true
+        self.scrollView.leftAnchor.constraint(equalTo: self.view.leftAnchor).isActive = true
+        self.scrollView.heightAnchor.constraint(equalTo: self.view.heightAnchor).isActive = true
+        self.scrollView.rightAnchor.constraint(equalTo: self.view.rightAnchor).isActive = true
+        
+        
     }
     
     func configureFiveWhy()
     {
-
-//        let Title = UILabel()
-//        Title.text = "Problem Statement:"
-//        Title.font = Title.font.withSize(20)
-//        Title.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
-//        self.scrollView.addSubview(Title)
         problemStatement = UITextView()
         problemStatement.backgroundColor = #colorLiteral(red: 0.8868028951, green: 0.8868028951, blue: 0.8868028951, alpha: 1)
         problemStatement.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
         problemStatement.text = "Enter the Problem Statement"
         problemStatement.isScrollEnabled = false
         problemStatement.delegate = self
-        problemStatement.font = problemStatement.font?.withSize(18)
+        problemStatement.font = problemStatement.font?.withSize(20)
         problemStatement.layer.borderColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         problemStatement.layer.borderWidth = 2
         problemStatement.layer.cornerRadius = 3
         problemStatement.addDoneButtonOnKeyboard()
         problemStatement.translatesAutoresizingMaskIntoConstraints = false
+        problemStatement.textContainer.maximumNumberOfLines = 3
         self.contentView.addSubview(problemStatement)
         
         fiveWhy1 = UITextView()
         fiveWhy1.text = "First Why"
-        fiveWhy1.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+        fiveWhy1.backgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
+        fiveWhy1.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
         fiveWhy1.translatesAutoresizingMaskIntoConstraints = false
         fiveWhy1.delegate = self
         fiveWhy1.font = problemStatement.font?.withSize(18)
@@ -109,11 +131,14 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
         fiveWhy1.layer.borderColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         fiveWhy1.layer.borderWidth = 2
         fiveWhy1.addDoneButtonOnKeyboard()
+        fiveWhy1.isHidden = true
+        fiveWhy1.textContainer.maximumNumberOfLines = 3
         self.contentView.addSubview(fiveWhy1)
         
         fiveWhy2 = UITextView()
         fiveWhy2.text = "Second Why"
-        fiveWhy2.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+        fiveWhy2.backgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
+        fiveWhy2.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
         fiveWhy2.translatesAutoresizingMaskIntoConstraints = false
         fiveWhy2.delegate = self
         fiveWhy2.font = problemStatement.font?.withSize(18)
@@ -121,11 +146,14 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
         fiveWhy2.layer.borderColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         fiveWhy2.layer.borderWidth = 2
         fiveWhy2.addDoneButtonOnKeyboard()
+        fiveWhy2.isHidden = true
+        fiveWhy2.textContainer.maximumNumberOfLines = 3
         self.contentView.addSubview(fiveWhy2)
         
         fiveWhy3 = UITextView()
         fiveWhy3.text = "Third Why"
-        fiveWhy3.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+        fiveWhy3.backgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
+        fiveWhy3.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
         fiveWhy3.translatesAutoresizingMaskIntoConstraints = false
         fiveWhy3.delegate = self
         fiveWhy3.font = problemStatement.font?.withSize(18)
@@ -133,11 +161,14 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
         fiveWhy3.layer.borderColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         fiveWhy3.layer.borderWidth = 2
         fiveWhy3.addDoneButtonOnKeyboard()
+        fiveWhy3.isHidden = true
+        fiveWhy3.textContainer.maximumNumberOfLines = 3
         self.contentView.addSubview(fiveWhy3)
         
         fiveWhy4 = UITextView()
         fiveWhy4.text = "Fourth Why"
-        fiveWhy4.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+        fiveWhy4.backgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
+        fiveWhy4.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
         fiveWhy4.translatesAutoresizingMaskIntoConstraints = false
         fiveWhy4.delegate = self
         fiveWhy4.font = problemStatement.font?.withSize(18)
@@ -145,11 +176,14 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
         fiveWhy4.layer.borderColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         fiveWhy4.layer.borderWidth = 2
         fiveWhy4.addDoneButtonOnKeyboard()
+        fiveWhy4.isHidden = true
+        fiveWhy4.textContainer.maximumNumberOfLines = 3
         self.contentView.addSubview(fiveWhy4)
         
         fiveWhy5 = UITextView()
         fiveWhy5.text = "Fifth Why"
-        fiveWhy5.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+        fiveWhy5.backgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
+        fiveWhy5.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
         fiveWhy5.translatesAutoresizingMaskIntoConstraints = false
         fiveWhy5.delegate = self
         fiveWhy5.font = problemStatement.font?.withSize(18)
@@ -157,51 +191,70 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
         fiveWhy5.layer.borderColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         fiveWhy5.layer.borderWidth = 2
         fiveWhy5.addDoneButtonOnKeyboard()
+        fiveWhy5.isHidden = true
+        fiveWhy5.textContainer.maximumNumberOfLines = 3
         self.contentView.addSubview(fiveWhy5)
         
         setConstraints()
-        self.scrollView.resizeScrollViewContentSize()
+        let size = self.contentView.frame.size
+        self.scrollView.contentSize = CGSize(width: size.width, height: size.height)
+        
+        setTitles()
+    }
+    
+    private func setTitles(){
+        var str = ["PROBLEM STATEMENT", "FIRST WHY", "SECOND WHY", "THIRD WHY", "FOUTH WHY", "FIFTH WHY"]
+        var views = [problemStatement, fiveWhy1, fiveWhy2, fiveWhy3, fiveWhy4, fiveWhy5]
+        for idx in 0...5{
+            let label = UILabel()
+            label.text = str[idx]
+            label.textColor = .black
+            label.font = label.font.withSize(21)
+            label.translatesAutoresizingMaskIntoConstraints = false
+            label.isHidden = true
+            contentView.addSubview(label)
+            label.bottomAnchor.constraint(equalTo: views[idx]!.topAnchor).isActive = true
+            label.centerXAnchor.constraint(equalTo: views[idx]!.centerXAnchor).isActive = true
+            self.labels.append(label)
+        }
+        self.labels[0].isHidden = false
     }
     
     
     private func setConstraints(){
-        var topConstraint: NSLayoutConstraint
-        var rightConstraint: NSLayoutConstraint
-        var bottomConstraint: NSLayoutConstraint
-        var leftConstraint: NSLayoutConstraint
         let width_15 = self.view.frame.width/15
-        let width_10 = self.view.frame.width/10
+//        let width_10 = self.view.frame.width/10
         let height_15 = self.view.frame.height/15
-        let height_10 = self.view.frame.height/10
+//        let height_10 = self.view.frame.height/10
         
         
         problemStatement.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: height_15).isActive = true
         problemStatement.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: width_15).isActive = true
-        problemStatement.rightAnchor.constraint(equalTo: problemStatement.leftAnchor, constant: 13*width_15).isActive = true
+        problemStatement.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -2*width_15).isActive = true
         
         fiveWhy1.topAnchor.constraint(equalTo: problemStatement.bottomAnchor, constant: height_15).isActive = true
         fiveWhy1.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: width_15).isActive = true
-        fiveWhy1.rightAnchor.constraint(equalTo: fiveWhy1.leftAnchor, constant: 13*width_15).isActive = true
+        fiveWhy1.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -2*width_15).isActive = true
         
         fiveWhy2.topAnchor.constraint(equalTo: fiveWhy1.bottomAnchor, constant: height_15).isActive = true
         fiveWhy2.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: width_15).isActive = true
-        fiveWhy2.rightAnchor.constraint(equalTo: fiveWhy2.leftAnchor, constant: 13*width_15).isActive = true
+        fiveWhy2.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -2*width_15).isActive = true
         
         fiveWhy3.topAnchor.constraint(equalTo: fiveWhy2.bottomAnchor, constant: height_15).isActive = true
         fiveWhy3.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: width_15).isActive = true
-        fiveWhy3.rightAnchor.constraint(equalTo: fiveWhy3.leftAnchor, constant: 13*width_15).isActive = true
+        fiveWhy3.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -2*width_15).isActive = true
         
         fiveWhy4.topAnchor.constraint(equalTo: fiveWhy3.bottomAnchor, constant: height_15).isActive = true
         fiveWhy4.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: width_15).isActive = true
-        fiveWhy4.rightAnchor.constraint(equalTo: fiveWhy4.leftAnchor, constant: 13*width_15).isActive = true
+        fiveWhy4.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -2*width_15).isActive = true
         
         fiveWhy5.topAnchor.constraint(equalTo: fiveWhy4.bottomAnchor, constant: height_15).isActive = true
         fiveWhy5.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: width_15).isActive = true
-        fiveWhy5.rightAnchor.constraint(equalTo: fiveWhy5.leftAnchor, constant: 13*width_15).isActive = true
+        fiveWhy5.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -2*width_15).isActive = true
         
-        contentView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 0).isActive = true
-        contentView.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: 0).isActive = true
-        contentView.rightAnchor.constraint(equalTo: scrollView.leftAnchor, constant: scrollView.frame.width).isActive = true
+        contentView.topAnchor.constraint(equalTo: scrollView.topAnchor).isActive = true
+        contentView.leftAnchor.constraint(equalTo: scrollView.leftAnchor).isActive = true
+        contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor).isActive = true
         contentView.bottomAnchor.constraint(equalTo: fiveWhy5.bottomAnchor, constant: height_15).isActive = true
     }
     
@@ -221,11 +274,13 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
             UIView.animate(withDuration: 0.3, animations: {
                 // scroll to the position above keyboard 10 points
                 self.scrollView.contentOffset = CGPoint(x: self.lastOffset.x, y: collapseSpace + 10)
-                self.lastOffset.y += 10
             })
         }
         print("In text view: ",self.contentView.frame)
-        self.scrollView.resizeScrollViewContentSize()
+        //Update the scrollView content size to account for the increased contentView
+        let size = self.contentView.frame.size
+        self.scrollView.contentSize = CGSize(width: size.width, height: size.height + keyboardHeight)
+
     }
     
     func textViewDidBeginEditing(_ textView: UITextView) {
@@ -235,12 +290,137 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
                 problemStatement.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
             }
         }
+        
+        if fiveWhy1.isFirstResponder{
+            if fiveWhy1.text == "First Why"{
+                fiveWhy1.text = ""
+                fiveWhy1.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+            }
+        }
+        if fiveWhy2.isFirstResponder{
+            if fiveWhy2.text == "Second Why"{
+                fiveWhy2.text = ""
+                fiveWhy2.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+            }
+        }
+        if fiveWhy3.isFirstResponder{
+            if fiveWhy3.text == "Third Why"{
+                fiveWhy3.text = ""
+                fiveWhy3.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+            }
+        }
+        if fiveWhy4.isFirstResponder{
+            if fiveWhy4.text == "Fourth Why"{
+                fiveWhy4.text = ""
+                fiveWhy4.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+            }
+        }
+        if fiveWhy5.isFirstResponder{
+            if fiveWhy5.text == "Fifth Why"{
+                fiveWhy5.text = ""
+                fiveWhy5.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+            }
+        }
     }
 
     func textViewDidEndEditing(_ textView: UITextView) {
         if problemStatement.text.isEmpty || problemStatement.text == "" {
             problemStatement.text = "Enter the Problem Statement"
             problemStatement.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
+        }
+        
+        if fiveWhy1.text.isEmpty || fiveWhy1.text == "" {
+            fiveWhy1.text = "First Why"
+            fiveWhy1.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
+        }
+        
+        if fiveWhy2.text.isEmpty || fiveWhy2.text == "" {
+            fiveWhy2.text = "Second Why"
+            fiveWhy2.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
+        }
+        
+        if fiveWhy3.text.isEmpty || fiveWhy3.text == "" {
+            fiveWhy3.text = "Third Why"
+            fiveWhy3.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
+        }
+        
+        if fiveWhy4.text.isEmpty || fiveWhy4.text == "" {
+            fiveWhy4.text = "Fourth Why"
+            fiveWhy4.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
+        }
+
+        if fiveWhy5.text.isEmpty || fiveWhy5.text == "" {
+            fiveWhy5.text = "Fifth Why"
+            fiveWhy5.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
+        }
+        
+        
+        if problemStatement.text != "Enter the Problem Statement"{
+            fiveWhy1.isHidden = false
+            labels[1].isHidden = false
+        }
+        else{
+            print("empty")
+            fiveWhy1.isHidden = true
+            fiveWhy2.isHidden = true
+            fiveWhy3.isHidden = true
+            fiveWhy4.isHidden = true
+            fiveWhy5.isHidden = true
+            for i in 1...5{
+                labels[i].isHidden = true
+            }
+            return
+        }
+        if fiveWhy1.text != "First Why"{
+            fiveWhy2.isHidden = false
+            labels[2].isHidden = false
+        }
+        else{
+            fiveWhy2.isHidden = true
+            fiveWhy3.isHidden = true
+            fiveWhy4.isHidden = true
+            fiveWhy5.isHidden = true
+            for i in 2...5{
+                labels[i].isHidden = true
+            }
+            return
+        }
+        if fiveWhy2.text != "Second Why"{
+            fiveWhy3.isHidden = false
+            labels[3].isHidden = false
+        }
+        else{
+            fiveWhy3.isHidden = true
+            fiveWhy4.isHidden = true
+            fiveWhy5.isHidden = true
+            for i in 3...5{
+                labels[i].isHidden = true
+            }
+            return
+        }
+        if fiveWhy3.text != "Third Why"{
+            fiveWhy4.isHidden = false
+            labels[4].isHidden = false
+        }
+        else{
+            fiveWhy4.isHidden = true
+            fiveWhy5.isHidden = true
+            for i in 4...5{
+                labels[i].isHidden = true
+            }
+            return
+        }
+        if fiveWhy4.text != "Fourth Why"{
+            fiveWhy5.isHidden = false
+            labels[5].isHidden = false
+        }
+        else{
+            fiveWhy5.isHidden = true
+            labels[5].isHidden = true
+            return
+        }
+        if fiveWhy5.text != "Fifth Why"{
+            fiveWhy5.isHidden = false
         }
     }
     
@@ -258,19 +438,18 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
     
     
     @objc func keyboardWillShow(notification: NSNotification) {
-        if keyboardHeight != nil {
+        if keyboardHeight != 0 {
             print("keyboard height 0")
             return
         }
         if let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
-            keyboardHeight = keyboardSize.height + 50
-            // so increase contentView's height by keyboard height
-            UIView.animate(withDuration: 0.3, animations: {
-  
-            })
+            keyboardHeight = keyboardSize.height
+            //Increase the scrollView contentsize so it is scrollable beyond the keyboard
+            let size = self.scrollView.contentSize
+            self.scrollView.contentSize = CGSize(width: size.width, height: size.height + keyboardHeight)
             // move if keyboard hide input field
             let distanceToBottom = self.scrollView.frame.size.height - (activeField?.frame.origin.y)! - (activeField?.frame.size.height)!
-            let collapseSpace = keyboardHeight - distanceToBottom
+            let collapseSpace = keyboardHeight - distanceToBottom + 50
             if collapseSpace < 0 {
                 return
             }
@@ -286,7 +465,9 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
         UIView.animate(withDuration: 0.3) {
             self.scrollView.contentOffset = self.lastOffset
         }
-        keyboardHeight = nil
+        let size = self.contentView.frame.size
+        self.scrollView.contentSize = CGSize(width: size.width, height: size.height)
+        keyboardHeight = 0
     }
 
     func checkForChanges()
@@ -386,10 +567,7 @@ extension UIScrollView {
     func resizeScrollViewContentSize() {
         var contentRect = CGRect.zero
         for view in self.subviews {
-            print("Subview here")
             contentRect = contentRect.union(view.frame)
-            print(view.frame)
-            print(contentRect)
         }
         self.contentSize = contentRect.size
     }
@@ -476,8 +654,17 @@ extension UIViewController {
 }
 
 
+extension HomeViewController: savePDFDelegate
+{
+    func savePDFtoStorage() {
+        if HomeViewController.pdfData != nil {
+            self.view.saveViewPdf(data: HomeViewController.pdfData!, name: LandingPageViewController.projectName)
+        }
+    }
+}
 
-extension HomeViewController: menuControllerDelegate
+
+extension HomeViewController: menuControllerDelegate, UIPopoverPresentationControllerDelegate
 {
  
     
@@ -525,12 +712,33 @@ extension HomeViewController: menuControllerDelegate
     
     func takeScreenShot()
     {
-
+        contentView.exportAsImage()
     }
     
     func exportAsPDF()
     {
-
+        let popoverVC = self.view.exportAsPdfFromView(name: LandingPageViewController.projectName, auxView: HomeViewController.analysisVC.view) as? PdfPreviewViewController
+        if (popoverVC != nil){
+            HomeViewController.pdfData = NSMutableData(data: popoverVC!.pdfData)
+            popoverVC?.delegate = self
+            popoverVC!.modalPresentationStyle = .popover
+            popoverVC!.preferredContentSize = CGSize(width: self.view.bounds.width*(2/3), height: self.view.bounds.height*(2/3))
+            if let popoverController = popoverVC!.popoverPresentationController {
+                popoverController.sourceView = self.view
+                popoverController.sourceRect = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: self.view.bounds.height/6)
+                popoverController.permittedArrowDirections = .any
+                popoverController.delegate = self
+                popoverVC!.delegate = self
+            }
+            present(popoverVC!, animated: true, completion: nil)
+        }
+    }
+    
+    func startAnalysis()
+    {
+        returnTextView(gesture: UIGestureRecognizer())
+//        let vc = AnalysisViewController()
+        self.navigationController?.pushViewController(HomeViewController.analysisVC, animated: true)
     }
     
 
