@@ -21,6 +21,7 @@ class AnalysisViewController: UIViewController, UIScrollViewDelegate, UITextView
     var tempMeasures: UITextView!
     var permMeasures: UITextView!
     var verification: UITextView!
+    var labels = [UILabel]()
     
     var activeField: UITextView?
     var lastOffset: CGPoint!
@@ -32,8 +33,9 @@ class AnalysisViewController: UIViewController, UIScrollViewDelegate, UITextView
         configureViews()
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
-        
+        setTitles()
         checkLoadData()
+        
         // Do any additional setup after loading the view.
     }
     
@@ -62,13 +64,21 @@ class AnalysisViewController: UIViewController, UIScrollViewDelegate, UITextView
     func configureViews(){
         
         
-        self.scrollView = UIScrollView(frame: CGRect(x: 0, y: 0, width: self.view.frame.width, height: self.view.frame.height))
+        self.scrollView = UIScrollView()
+        self.scrollView.translatesAutoresizingMaskIntoConstraints = false
         self.scrollView.delegate = self
         self.view.addSubview(scrollView)
+        
+        self.scrollView.topAnchor.constraint(equalTo: self.view.topAnchor).isActive = true
+        self.scrollView.widthAnchor.constraint(equalTo: self.view.widthAnchor).isActive = true
+        self.scrollView.leftAnchor.constraint(equalTo: self.view.leftAnchor).isActive = true
+        self.scrollView.heightAnchor.constraint(equalTo: self.view.heightAnchor).isActive = true
+        
+        
         self.scrollView.contentSize = CGSize(width: self.view.frame.width, height: self.view.frame.height)
         self.contentView = UIView()
         self.scrollView.backgroundColor = #colorLiteral(red: 0.721568644, green: 0.8862745166, blue: 0.5921568871, alpha: 1)
-        self.contentView.backgroundColor = #colorLiteral(red: 0.9411764741, green: 0.4980392158, blue: 0.3529411852, alpha: 1)
+        self.contentView.backgroundColor = .clear
         self.contentView.translatesAutoresizingMaskIntoConstraints = false
         self.scrollView.addSubview(contentView)
         
@@ -155,47 +165,68 @@ class AnalysisViewController: UIViewController, UIScrollViewDelegate, UITextView
         let width_15 = self.view.frame.width/15
         let height_15 = self.view.frame.height/15
         
+        
+        
         name.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: height_15).isActive = true
         name.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: width_15).isActive = true
-        name.rightAnchor.constraint(equalTo: name.leftAnchor, constant: 4*width_15).isActive = true
+        name.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -10*width_15).isActive = true
         nameField.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: height_15).isActive = true
         nameField.leftAnchor.constraint(equalTo: name.rightAnchor, constant: 0).isActive = true
-        nameField.rightAnchor.constraint(equalTo: nameField.leftAnchor, constant: 9*width_15).isActive = true
+        nameField.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -1*width_15).isActive = true
     
         
         department.topAnchor.constraint(equalTo: name.bottomAnchor, constant: height_15).isActive = true
         department.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: width_15).isActive = true
-        department.rightAnchor.constraint(equalTo: department.leftAnchor, constant: 4*width_15).isActive = true
+        department.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -10*width_15).isActive = true
         departmentField.topAnchor.constraint(equalTo: nameField.bottomAnchor, constant: height_15).isActive = true
         departmentField.leftAnchor.constraint(equalTo: department.rightAnchor, constant: 0).isActive = true
-        departmentField.rightAnchor.constraint(equalTo: departmentField.leftAnchor, constant: 9*width_15).isActive = true
+        departmentField.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -1*width_15).isActive = true
         
         
         equipment.topAnchor.constraint(equalTo: department.bottomAnchor, constant: height_15).isActive = true
         equipment.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: width_15).isActive = true
-        equipment.rightAnchor.constraint(equalTo: equipment.leftAnchor, constant: 4*width_15).isActive = true
+        equipment.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -10*width_15).isActive = true
         equipmentField.topAnchor.constraint(equalTo: departmentField.bottomAnchor, constant: height_15).isActive = true
         equipmentField.leftAnchor.constraint(equalTo: equipment.rightAnchor, constant: 0).isActive = true
-        equipmentField.rightAnchor.constraint(equalTo: equipmentField.leftAnchor, constant: 9*width_15).isActive = true
+        equipmentField.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -1*width_15).isActive = true
         
         tempMeasures.topAnchor.constraint(equalTo: equipment.bottomAnchor, constant: height_15).isActive = true
         tempMeasures.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: width_15).isActive = true
-        tempMeasures.rightAnchor.constraint(equalTo: tempMeasures.leftAnchor, constant: 13*width_15).isActive = true
+        tempMeasures.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -2*width_15).isActive = true
         
         permMeasures.topAnchor.constraint(equalTo: tempMeasures.bottomAnchor, constant: height_15).isActive = true
         permMeasures.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: width_15).isActive = true
-        permMeasures.rightAnchor.constraint(equalTo: permMeasures.leftAnchor, constant: 13*width_15).isActive = true
+        permMeasures.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -2*width_15).isActive = true
         
         verification.topAnchor.constraint(equalTo: permMeasures.bottomAnchor, constant: height_15).isActive = true
         verification.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: width_15).isActive = true
-        verification.rightAnchor.constraint(equalTo: verification.leftAnchor, constant: 13*width_15).isActive = true
+        verification.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -2*width_15).isActive = true
         
-        contentView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 0).isActive = true
-        contentView.leftAnchor.constraint(equalTo: scrollView.leftAnchor, constant: 0).isActive = true
-        contentView.rightAnchor.constraint(equalTo: scrollView.leftAnchor, constant: scrollView.frame.width).isActive = true
+        contentView.topAnchor.constraint(equalTo: scrollView.topAnchor).isActive = true
+        contentView.leftAnchor.constraint(equalTo: scrollView.leftAnchor).isActive = true
+        contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor).isActive = true
         contentView.bottomAnchor.constraint(equalTo: verification.bottomAnchor, constant: height_15).isActive = true
         
     }
+    
+    private func setTitles(){
+        var str = ["TEMPORARY COUNTERMEASURES", "PERMANENT COUNTERMEASURES", "VERIFICATION"]
+        var views = [tempMeasures, permMeasures, verification]
+        for idx in 0...2{
+            let label = UILabel()
+            label.text = str[idx]
+            label.textColor = .black
+            label.font = label.font.withSize(21)
+            label.translatesAutoresizingMaskIntoConstraints = false
+//            label.isHidden = true
+            contentView.addSubview(label)
+            label.bottomAnchor.constraint(equalTo: views[idx]!.topAnchor).isActive = true
+            label.centerXAnchor.constraint(equalTo: views[idx]!.centerXAnchor).isActive = true
+            self.labels.append(label)
+        }
+//        self.labels[0].isHidden = false
+    }
+    
     
     func checkLoadData(){
         if HomeViewController.analysisData.count == 6{
@@ -259,7 +290,7 @@ class AnalysisViewController: UIViewController, UIScrollViewDelegate, UITextView
             self.scrollView.contentSize = CGSize(width: size.width, height: size.height + keyboardHeight)
             // move if keyboard hide input field
             let distanceToBottom = self.scrollView.frame.size.height - (activeField?.frame.origin.y ?? 0) - (activeField?.frame.size.height ?? 0)
-            let collapseSpace = keyboardHeight - distanceToBottom
+            let collapseSpace = keyboardHeight - distanceToBottom + 50
             if collapseSpace < 0 {
                 return
             }

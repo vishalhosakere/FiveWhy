@@ -39,7 +39,8 @@ class PdfPreviewViewController: UIViewController {
 
     
     @objc func clickedSave(_ sender : UIButton){
-        delegate?.savePDFtoStorage()
+        let _ = self.view.saveViewPdf(data: NSMutableData(data: self.pdfData), name: LandingPageViewController.projectName)
+        self.showToast(message: "Saved PDF Successfully")
         dismiss(animated: true, completion: nil)
     }
     /*

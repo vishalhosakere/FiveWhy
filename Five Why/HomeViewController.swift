@@ -45,6 +45,7 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         self.contentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(returnTextView(gesture:))))
+        load_action()
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -90,7 +91,7 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
         self.scrollView.contentSize = CGSize(width: self.view.bounds.width, height: self.view.bounds.height)
         self.contentView = UIView()
         self.scrollView.backgroundColor = #colorLiteral(red: 0.721568644, green: 0.8862745166, blue: 0.5921568871, alpha: 1)
-        self.contentView.backgroundColor = #colorLiteral(red: 0.9411764741, green: 0.4980392158, blue: 0.3529411852, alpha: 1)
+        self.contentView.backgroundColor = .clear
         self.contentView.translatesAutoresizingMaskIntoConstraints = false
         self.scrollView.addSubview(contentView)
         
@@ -324,34 +325,56 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
     }
 
     func textViewDidEndEditing(_ textView: UITextView) {
+        updateTextFields()
+    }
+    
+    func updateTextFields(){
         if problemStatement.text.isEmpty || problemStatement.text == "" {
             problemStatement.text = "Enter the Problem Statement"
             problemStatement.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
+        }
+        else if problemStatement.text != "Enter the Problem Statement"{
+            problemStatement.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         }
         
         if fiveWhy1.text.isEmpty || fiveWhy1.text == "" {
             fiveWhy1.text = "First Why"
             fiveWhy1.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
         }
+        else if fiveWhy1.text != "First Why"{
+            fiveWhy1.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+        }
         
         if fiveWhy2.text.isEmpty || fiveWhy2.text == "" {
             fiveWhy2.text = "Second Why"
             fiveWhy2.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
+        }
+        else if fiveWhy2.text != "Second Why"{
+            fiveWhy2.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         }
         
         if fiveWhy3.text.isEmpty || fiveWhy3.text == "" {
             fiveWhy3.text = "Third Why"
             fiveWhy3.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
         }
+        else if fiveWhy2.text != "Third Why"{
+            fiveWhy3.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+        }
         
         if fiveWhy4.text.isEmpty || fiveWhy4.text == "" {
             fiveWhy4.text = "Fourth Why"
             fiveWhy4.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
         }
-
+        else if fiveWhy4.text != "Fourth Why"{
+            fiveWhy4.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+        }
+        
         if fiveWhy5.text.isEmpty || fiveWhy5.text == "" {
             fiveWhy5.text = "Fifth Why"
             fiveWhy5.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
+        }
+        else if fiveWhy5.text != "Fifth Why"{
+            fiveWhy5.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         }
         
         
@@ -423,7 +446,6 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
             fiveWhy5.isHidden = false
         }
     }
-    
 
     func textViewShouldBeginEditing(_ textView: UITextView) -> Bool {
         activeField = textView
@@ -472,20 +494,52 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
 
     func checkForChanges()
     {
-
+        let homeData = [problemStatement.text,fiveWhy1.text,fiveWhy2.text,fiveWhy3.text,fiveWhy4.text,fiveWhy5.text]
+        let analysisData = HomeViewController.analysisData
+        let allData = [homeData,analysisData]
+        let jsonEncoder = JSONEncoder()
+        self.jsonData = try? jsonEncoder.encode(allData)
+        print("Checking old data")
+        print(getURL(for: .ProjectInShared))
+        print(getURL(for: .ApplicationInShared))
+        let fileName = LandingPageViewController.projectName + ".excelsior"
+        print(fileName)
+        let file = FileHandling(name: fileName)
+        
+        if file.findFile(in: .ProjectInShared)
+        {
+            try? self.oldjSONData = Data(contentsOf: getURL(for: .ProjectInShared).appendingPathComponent(LandingPageViewController.projectName + ".excelsior"), options: .uncachedRead)
+            print("Old Data restored")
+        }
     }
     
     func load_action()
     {
-        let fileName = "/"+"Process Diagram"+"/"+LandingPageViewController.projectName+"/"+LandingPageViewController.projectName+".excelsior"
+        let fileName = LandingPageViewController.projectName+".excelsior"
         let file = FileHandling(name: fileName)
-        if file.findFile(in: .Shared) {
-
+        if file.findFile(in: .ProjectInShared) {
+            try? self.jsonData = Data(contentsOf: getURL(for: .ProjectInShared).appendingPathComponent(fileName), options: .uncachedRead)
+            print("Data encoded")
+            let jsonDecoder = JSONDecoder()
+            let decodedData = try? jsonDecoder.decode([[String]].self, from: self.jsonData!)
+            if decodedData != nil {
+                let allData = decodedData
+                restoreState(allData: allData!)
+            }
         }
     }
     
-    func restoreState(){
-
+    func restoreState(allData : [[String]]){
+        let homeData = allData[0]
+        HomeViewController.analysisData = allData[1]
+        
+        problemStatement.text = homeData[0]
+        fiveWhy1.text = homeData[1]
+        fiveWhy2.text = homeData[2]
+        fiveWhy3.text = homeData[3]
+        fiveWhy4.text = homeData[4]
+        fiveWhy5.text = homeData[5]
+        updateTextFields()
     }
     
     //    Generates unique ID for the shapes
@@ -498,27 +552,29 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
     
     @objc func didClickExit(){
         
-//        checkForChanges()
+        checkForChanges()
         
-//        if String(data: self.jsonData!, encoding: .utf8) == String(data: self.oldjSONData!, encoding: .utf8)
-//        {
+        if self.jsonData != nil, self.oldjSONData != nil, String(data: self.jsonData!, encoding: .utf8) == String(data: self.oldjSONData!, encoding: .utf8)
+        {
             dismiss(animated: true)
-//        }
-            
-//        else
-//        {
-//            let alert = UIAlertController(title: "Exiting without saving changes!", message: nil, preferredStyle: .alert)
-//            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-//            alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { action in
-//                ContainerViewController.menuDelegate?.saveViewState()
-//                self.dismiss(animated: true)
-//            }))
-//            alert.addAction(UIAlertAction(title: "OK", style: .destructive, handler: { action in
-//                self.dismiss(animated: true)
-//            }))
-//
-//            self.present(alert, animated: true)
-//        }
+        }
+        else if self.oldjSONData == nil{
+            dismiss(animated: true)
+        }
+        else
+        {
+            let alert = UIAlertController(title: "Exiting without saving changes!", message: nil, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+            alert.addAction(UIAlertAction(title: "Save", style: .default, handler: { action in
+                ContainerViewController.menuDelegate?.saveViewState()
+                self.dismiss(animated: true)
+            }))
+            alert.addAction(UIAlertAction(title: "OK", style: .destructive, handler: { action in
+                self.dismiss(animated: true)
+            }))
+
+            self.present(alert, animated: true)
+        }
     }
 
     
@@ -670,20 +726,25 @@ extension HomeViewController: menuControllerDelegate, UIPopoverPresentationContr
     
     func saveViewState() {
         
-        
-        let path = getURL(for: .Documents).appendingPathComponent(LandingPageViewController.projectName)
+        let homeData = [problemStatement.text,fiveWhy1.text,fiveWhy2.text,fiveWhy3.text,fiveWhy4.text,fiveWhy5.text]
+        let analysisData = HomeViewController.analysisData
+        let allData = [homeData,analysisData]
+        let jsonEncoder = JSONEncoder()
+        self.jsonData = try? jsonEncoder.encode(allData)
         let fileName = LandingPageViewController.projectName+".excelsior"
-        if writeFile(containing: String(data: jsonData!, encoding: .utf8)!, to: path, withName: fileName) {
+        if writeFile(containing: String(data: jsonData!, encoding: .utf8)!, to: getURL(for: .ProjectInShared), withName: fileName) {
             self.showToast(message: "Saved Successfully.")
         }
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+        print(getURL(for: .ProjectInShared))
     }
     
     func saveViewStateAsNew() {
-        
 
-        
-        
+        let homeData = [problemStatement.text,fiveWhy1.text,fiveWhy2.text,fiveWhy3.text,fiveWhy4.text,fiveWhy5.text]
+        let analysisData = HomeViewController.analysisData
+        let allData = [homeData,analysisData]
+        let jsonEncoder = JSONEncoder()
+        self.jsonData = try? jsonEncoder.encode(allData)
         
         let alert = UIAlertController(title: "Enter the name of the Project", message: nil, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
@@ -695,12 +756,11 @@ extension HomeViewController: menuControllerDelegate, UIPopoverPresentationContr
             {
                 LandingPageViewController.projectName = alert.textFields!.first!.text!
                 let directory = FileHandling(name: LandingPageViewController.projectName)
-                if directory.createNewProjectDirectory()
+                if directory.createNewProjectDirectory(), directory.createSharedProjectDirectory()
                 {
                     print("Directory successfully created!")
-                    let path = self.getURL(for: .Documents).appendingPathComponent(LandingPageViewController.projectName)
                     let fileName = LandingPageViewController.projectName+".excelsior"
-                    if self.writeFile(containing: String(data: self.jsonData!, encoding: .utf8)!, to: path, withName: fileName)
+                    if self.writeFile(containing: String(data: self.jsonData!, encoding: .utf8)!, to: self.getURL(for: .ProjectInShared), withName: fileName)
                     {
                         self.showToast(message: "Saved Successfully")
                     }
@@ -712,12 +772,13 @@ extension HomeViewController: menuControllerDelegate, UIPopoverPresentationContr
     
     func takeScreenShot()
     {
-        contentView.exportAsImage()
+        self.view.exportAsImage(auxView: HomeViewController.analysisVC.view, attachBelow: false)
+        self.showToast(message: "Saved Screenshot Successfully")
     }
     
     func exportAsPDF()
     {
-        let popoverVC = self.view.exportAsPdfFromView(name: LandingPageViewController.projectName, auxView: HomeViewController.analysisVC.view) as? PdfPreviewViewController
+        let popoverVC = self.view.exportAsPdfFromView(name: LandingPageViewController.projectName, auxView: HomeViewController.analysisVC.view, attachBelow: false) as? PdfPreviewViewController
         if (popoverVC != nil){
             HomeViewController.pdfData = NSMutableData(data: popoverVC!.pdfData)
             popoverVC?.delegate = self
@@ -736,9 +797,15 @@ extension HomeViewController: menuControllerDelegate, UIPopoverPresentationContr
     
     func startAnalysis()
     {
+        
         returnTextView(gesture: UIGestureRecognizer())
-//        let vc = AnalysisViewController()
-        self.navigationController?.pushViewController(HomeViewController.analysisVC, animated: true)
+        if fiveWhy5.isHidden != true, fiveWhy5.text != "Fifth Why" {
+//            let vc = AnalysisViewController()
+            self.navigationController?.pushViewController(HomeViewController.analysisVC, animated: true)
+        }
+        else{
+            self.showToast(message: "Please complete the Five Whys first")
+        }
     }
     
 

@@ -11,9 +11,15 @@ import UIKit
 extension UIView {
     
     // Export pdf from Save pdf in drectory and return pdf file path
-    func exportAsPdfFromView(name forName: String, auxView: UIView?) -> UIViewController? {
+    func exportAsPdfFromView(name forName: String, auxView: UIView?, attachBelow below: Bool) -> UIViewController? {
         scaler(view: self)
-        let pdfPageFrame = CGRect(x: 0, y: 0, width: self.bounds.width + (auxView?.bounds.width ?? 0), height: self.bounds.height + (auxView?.bounds.height ?? 0))
+        var pdfPageFrame : CGRect
+        if below == true{
+            pdfPageFrame = CGRect(x: 0, y: 0, width: max(self.bounds.width , (auxView?.bounds.width ?? 0)), height: self.bounds.height + (auxView?.bounds.height ?? 0))
+        }
+        else{
+            pdfPageFrame = CGRect(x: 0, y: 0, width: self.bounds.width + (auxView?.bounds.width ?? 0), height: max(self.bounds.height , (auxView?.bounds.height ?? 0)))
+        }
         let pdfData = NSMutableData()
         UIGraphicsBeginPDFContextToData(pdfData, pdfPageFrame, nil)
         UIGraphicsBeginPDFPageWithInfo(pdfPageFrame, nil)
@@ -21,7 +27,12 @@ extension UIView {
         //        pdfContext.scaleBy(x: 1/8, y: 1/8)
         self.layer.render(in: pdfContext)
         if auxView != nil{
-            pdfContext.translateBy(x: self.bounds.size.width, y: 0)
+            if below == true{
+                pdfContext.translateBy(x: 0, y: self.bounds.size.height)
+            }
+            else{
+                pdfContext.translateBy(x: self.bounds.size.width, y: 0)
+            }
             auxView?.layer.render(in: pdfContext)
         }
         UIGraphicsEndPDFContext()
@@ -39,14 +50,28 @@ extension UIView {
         
     }
     
-    func exportAsImage(){
+    func exportAsImage(auxView: UIView?, attachBelow below: Bool){
         //scaler(view: self)
         // Create the image context to draw in
-        UIGraphicsBeginImageContextWithOptions(self.bounds.size, false, UIScreen.main.scale)
+        var size: CGSize
+        if below == true{
+            size = CGSize(width: max(self.bounds.width , (auxView?.bounds.width ?? 0)), height: self.bounds.height + (auxView?.bounds.height ?? 0))
+        }
+        else{
+            size = CGSize(width: self.bounds.width + (auxView?.bounds.width ?? 0), height: max(self.bounds.height , (auxView?.bounds.height ?? 0)))
+        }
+        UIGraphicsBeginImageContextWithOptions(size, false, UIScreen.main.scale)
         // Get that context
         // Draw the image view in the context
         defer { UIGraphicsEndImageContext() }
-        self.drawHierarchy(in: self.bounds, afterScreenUpdates: true)
+        if below == true{
+            self.drawHierarchy(in: self.bounds, afterScreenUpdates: true)
+            auxView?.drawHierarchy(in: CGRect(x: 0, y: self.bounds.height, width: auxView?.bounds.width ?? 0, height: auxView?.bounds.height ?? 0), afterScreenUpdates: true)
+        }
+        else{
+            self.drawHierarchy(in: self.bounds, afterScreenUpdates: true)
+            auxView?.drawHierarchy(in: CGRect(x: self.bounds.width, y: 0, width: auxView?.bounds.width ?? 0, height: auxView?.bounds.height ?? 0), afterScreenUpdates: true)
+        }
         // You may or may not need to repeat the above with the imageView's subviews // Then you grab the "screenshot" of the context
         let image = UIGraphicsGetImageFromCurrentImageContext()
         // Be sure to end the context
