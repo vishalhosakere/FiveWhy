@@ -33,6 +33,10 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
     static var analysisData : [String] = []
     static var analysisVC = AnalysisViewController()
     static var pdfData: NSMutableData?
+    var selfSize : CGSize?
+    var arrows = [CAShapeLayer]()
+    
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -46,6 +50,7 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         self.contentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(returnTextView(gesture:))))
         load_action()
+        
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -54,13 +59,23 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
     }
     
     override func viewDidAppear(_ animated: Bool) {
+        configureArrows()
         super.viewDidAppear(animated)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
     
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        print("Transitioning size = ",size)
+        self.selfSize = size
+        configureArrows()
+    }
+    
+    
+    
     @objc func returnTextView(gesture: UIGestureRecognizer) {
+        print(problemStatement.frame)
         guard activeField != nil else {
             return
         }
@@ -94,6 +109,10 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
         self.contentView.backgroundColor = .clear
         self.contentView.translatesAutoresizingMaskIntoConstraints = false
         self.scrollView.addSubview(contentView)
+        let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe))
+        swipeLeft.direction = UISwipeGestureRecognizer.Direction.left
+        self.scrollView.addGestureRecognizer(swipeLeft)
+        
         
         self.scrollView.topAnchor.constraint(equalTo: self.view.topAnchor).isActive = true
         self.scrollView.widthAnchor.constraint(equalTo: self.view.widthAnchor).isActive = true
@@ -260,6 +279,63 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
     }
     
     
+    func configureArrows(){
+        for arrow in arrows{
+            arrow.removeFromSuperlayer()
+        }
+        self.arrows = []
+        var points = [[CGFloat]]()
+        let views = [problemStatement,fiveWhy1,fiveWhy2,fiveWhy3,fiveWhy4,fiveWhy5]
+
+        for i in 0...views.count-2{
+            for j in 0...i{
+                if views[i+1]!.isHidden {
+                    break
+                }
+                var _start : CGFloat
+                if selfSize != nil{
+                    _start = self.selfSize!.width/2 - CGFloat(i*40)
+                }
+                else{
+                    _start = (self.contentView.center.x) - CGFloat(i*40)
+                }
+                points.append([_start + CGFloat(j*80), views[i]!.center.y + views[i]!.bounds.height/2])
+                points.append([_start + CGFloat(j*80), labels[i+1].center.y - labels[i+1].bounds.height/2])
+            }
+        }
+        
+//        print(problemStatement.frame)
+//        print(points)
+
+//        let arrow = arrowShape()
+//
+//        self.contentView.addSubview(arrow)
+//        arrow.topAnchor.constraint(equalTo: problemStatement.bottomAnchor, constant: 0).isActive = true
+//        arrow.heightAnchor.constraint(equalToConstant: 40).isActive = true
+//        arrow.centerXAnchor.constraint(equalTo: problemStatement.centerXAnchor, constant: 0).isActive = true
+//        arrow.widthAnchor.constraint(equalToConstant: 40).isActive = true
+        for i in stride(from: 0, to: points.count, by: 2){
+            let arrowShape = CAShapeLayer()
+            let arrow = UIBezierPath.arrow(from: CGPoint(x: points[i][0], y: points[i][1]), to: CGPoint(x: points[i+1][0], y: points[i+1][1]), tailWidth: 15, headWidth: 22, headLength: 15)
+            arrowShape.path = arrow.cgPath
+            arrowShape.fillColor = #colorLiteral(red: 0.3176470697, green: 0.07450980693, blue: 0.02745098062, alpha: 1)
+            arrowShape.lineWidth = 2
+//            arrowShape.strokeColor = #colorLiteral(red: 0.9372549057, green: 0.3490196168, blue: 0.1921568662, alpha: 1)
+            self.contentView.layer.addSublayer(arrowShape)
+            self.arrows.append(arrowShape)
+        }
+        
+//        let arrowShape = CAShapeLayer()
+//        let arrow = UIBezierPath.arrow(from: CGPoint(x: points[0][0], y: points[0][1]), to: CGPoint(x: points[1][0], y: points[1][1]), tailWidth: 5, headWidth: 7, headLength: 4)
+//        arrowShape.path = arrow.cgPath
+//        arrowShape.fillColor = #colorLiteral(red: 0.7450980544, green: 0.1568627506, blue: 0.07450980693, alpha: 1)
+//        arrowShape.lineWidth = 1
+//        self.contentView.layer.addSublayer(arrowShape)
+        
+//        print(points[0][0], points[0][1])
+    }
+    
+    
     func textViewDidChange(_ textView: UITextView) {
         let fixedWidth = textView.frame.size.width
 //        textView.sizeThatFits(CGSize(width: fixedWidth, height: CGFloat.greatestFiniteMagnitude))
@@ -268,6 +344,7 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
         newFrame.size = CGSize(width: max(newSize.width, fixedWidth), height: newSize.height)
         textView.frame = newFrame
         
+        configureArrows()
         let distanceToBottom = self.scrollView.frame.size.height - (activeField?.frame.origin.y)! - (activeField?.frame.size.height)!
         let collapseSpace = keyboardHeight - distanceToBottom
         if collapseSpace > 0 {
@@ -322,10 +399,12 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
                 fiveWhy5.textColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
             }
         }
+        configureArrows()
     }
 
     func textViewDidEndEditing(_ textView: UITextView) {
         updateTextFields()
+        configureArrows()
     }
     
     func updateTextFields(){
@@ -445,6 +524,8 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
         if fiveWhy5.text != "Fifth Why"{
             fiveWhy5.isHidden = false
         }
+        
+        configureArrows()
     }
 
     func textViewShouldBeginEditing(_ textView: UITextView) -> Bool {
@@ -470,7 +551,7 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
             let size = self.scrollView.contentSize
             self.scrollView.contentSize = CGSize(width: size.width, height: size.height + keyboardHeight)
             // move if keyboard hide input field
-            let distanceToBottom = self.scrollView.frame.size.height - (activeField?.frame.origin.y)! - (activeField?.frame.size.height)!
+            let distanceToBottom = self.scrollView.frame.size.height - (activeField?.frame.origin.y ?? 0) - (activeField?.frame.size.height ?? 0)
             let collapseSpace = keyboardHeight - distanceToBottom + 50
             if collapseSpace < 0 {
                 return
@@ -481,6 +562,7 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
                 self.scrollView.contentOffset = CGPoint(x: self.lastOffset.x, y: collapseSpace + 10)
             })
         }
+        configureArrows()
     }
     
     @objc func keyboardWillHide(notification: NSNotification) {
@@ -490,8 +572,37 @@ class HomeViewController: UIViewController, UITextViewDelegate, UIScrollViewDele
         let size = self.contentView.frame.size
         self.scrollView.contentSize = CGSize(width: size.width, height: size.height)
         keyboardHeight = 0
+        configureArrows()
     }
 
+    @objc func handleSwipe(gesture: UIGestureRecognizer) {
+        
+        if let swipeGesture = gesture as? UISwipeGestureRecognizer {
+            
+            
+            switch swipeGesture.direction {
+            case UISwipeGestureRecognizer.Direction.right:
+                print("Swiped right")
+            case UISwipeGestureRecognizer.Direction.down:
+                print("Swiped down")
+            case UISwipeGestureRecognizer.Direction.left:
+                returnTextView(gesture: UIGestureRecognizer())
+                if fiveWhy5.isHidden != true, fiveWhy5.text != "Fifth Why" {
+                    //            let vc = AnalysisViewController()
+                    self.navigationController?.pushViewController(HomeViewController.analysisVC, animated: true)
+                }
+                else{
+                    self.showToast(message: "Please complete the Five Whys first")
+                }
+            case UISwipeGestureRecognizer.Direction.up:
+                print("Swiped up")
+            default:
+                break
+            }
+        }
+    }
+    
+    
     func checkForChanges()
     {
         let homeData = [problemStatement.text,fiveWhy1.text,fiveWhy2.text,fiveWhy3.text,fiveWhy4.text,fiveWhy5.text]

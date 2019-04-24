@@ -82,6 +82,11 @@ class AnalysisViewController: UIViewController, UIScrollViewDelegate, UITextView
         self.contentView.translatesAutoresizingMaskIntoConstraints = false
         self.scrollView.addSubview(contentView)
         
+        let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe))
+        swipeRight.direction = UISwipeGestureRecognizer.Direction.right
+        self.scrollView.addGestureRecognizer(swipeRight)
+        
+        
         name = UILabel()
         name.translatesAutoresizingMaskIntoConstraints = false
         name.text = "Name:"
@@ -303,6 +308,9 @@ class AnalysisViewController: UIViewController, UIScrollViewDelegate, UITextView
     }
     
     @objc func keyboardWillHide(notification: NSNotification) {
+        if self.lastOffset == nil {
+            return
+        }
         UIView.animate(withDuration: 0.3) {
             self.scrollView.contentOffset = self.lastOffset
         }
@@ -311,7 +319,25 @@ class AnalysisViewController: UIViewController, UIScrollViewDelegate, UITextView
         keyboardHeight = 0
     }
     
-    
+    @objc func handleSwipe(gesture: UIGestureRecognizer) {
+        
+        if let swipeGesture = gesture as? UISwipeGestureRecognizer {
+            
+            
+            switch swipeGesture.direction {
+            case UISwipeGestureRecognizer.Direction.right:
+                self.navigationController?.popViewController(animated: true)
+            case UISwipeGestureRecognizer.Direction.down:
+                break
+            case UISwipeGestureRecognizer.Direction.left:
+                break
+            case UISwipeGestureRecognizer.Direction.up:
+                break
+            default:
+                break
+            }
+        }
+    }
     
     /*
     // MARK: - Navigation

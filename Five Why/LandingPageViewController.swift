@@ -52,6 +52,11 @@ class LandingPageViewController: UIViewController {
         
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        HomeViewController.analysisVC = AnalysisViewController()
+    }
+    
     
     /*
      // MARK: - Navigation
